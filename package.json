@@ -1,0 +1,27 @@
+{
+  "name": "wxServer",
+  "version": "1.0.0",
+  "description": "- [相关](#%E7%9B%B8%E5%85%B3) - [学习内容](#%E5%AD%A6%E4%B9%A0%E5%86%85%E5%AE%B9)   - [环境搭建](#%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA)   - [Node的能力与应用](#Node%E7%9A%84%E8%83%BD%E5%8A%9B%E4%B8%8E%E5%BA%94%E7%94%A8)   - [koa](#koa) ## 相关 - [github](https://github.com/GivenCui/wxServer) - [幕布](https://mubu.com/doc/oaG5Q95Zb0) - [mooc](https://coding.imooc.com/learn/list/342.html) - [对接课程](https://pan.baidu.com/disk/home?errno=0&errmsg=Auth%20Login%20Sucess&&bduss=&ssnerror=0&traceid=#/all?vmode=list&path=%2Fmooc%E7%BD%91%E6%95%99%E7%A8%8B2019%2F%E7%BA%AF%E6%AD%A3%E5%95%86%E4%B8%9A%E7%BA%A7%E5%BA%94%E7%94%A8-%E5%BE%AE%E4%BF%A1%E5%B0%8F%E7%A8%8B%E5%BA%8F%E5%BC%80%E5%8F%91%E5%AE%9E%E6%88%98) - [lin-cms-vue](https://github.com/TaleLin/lin-cms-vue) - [lin-cms-koa](https://github.com/TaleLin/lin-cms-koa) ## 学习内容 ### 环境搭建 - 微信开发者工具 - MySQL - postman - Navicat - nodemon/pm2 ### Node的能力与应用 > node提供的API很\"低级\", 开发效率低, 所以基于nodejs, 有很多框架, 例如express, koa - 脱离浏览器运行JS - NodeJS Sream (前端工程化的基础) - 开源 - 工具 - 服务端API (重点) - 作为中间层",
+  "main": "index.js",
+  "scripts": {
+    "start": "cross-env NODE_ENV=dev nodemon --inspect ./app.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/GivenCui/wxServer.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/GivenCui/wxServer/issues"
+  },
+  "homepage": "https://github.com/GivenCui/wxServer#readme",
+  "dependencies": {
+    "koa": "^2.7.0"
+  },
+  "devDependencies": {
+    "cross-env": "^5.2.0",
+    "nodemon": "^1.19.1"
+  }
+}
