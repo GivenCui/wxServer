@@ -6,16 +6,29 @@ const app = new Koa()
 
 // 接收HTTP
 // 中间件如要注册到应用上
-app.use((ctx, next) => {
-  console.log('middleware 1 上')
-  next()
-  console.log('middleware 1 下')
+app.use(async (ctx, next) => {
+  try {
+    console.log('middleware 1 上')
+    // 方案一
+    // const res = next()
+    // res.then(data => {
+    //   console.log(data)
+    // })
+
+    // 方案二
+    const res = await next()
+    console.log(res)
+    console.log('middleware 1 下')
+  } catch (err) {
+    console.error('catch捕获', err)
+  }
 })
 
-app.use((ctx, next) => {
+app.use(async (ctx, next) => {
   console.log('middleware 2 上')
-  // next()
-  // console.log('middleware 2 下')
+  // await next()
+  console.log('middleware 2 下')
+  return Promise.reject('reject')
 })
 
 app.listen(3000, () => {

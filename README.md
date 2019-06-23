@@ -6,6 +6,9 @@
   - [koa](#koa)
     - [koa使用](#koa%E4%BD%BF%E7%94%A8)
     - [洋葱模型](#%E6%B4%8B%E8%91%B1%E6%A8%A1%E5%9E%8B)
+    - [koa支持async函数](#koa%E6%94%AF%E6%8C%81async%E5%87%BD%E6%95%B0)
+    - [深入理解async/await](#%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3asyncawait)
+      - [await](#await)
 ## 相关
 - [github](https://github.com/GivenCui/wxServer)
 - [幕布](https://mubu.com/doc/oaG5Q95Zb0)
@@ -111,3 +114,153 @@ app.listen(3000, () => {
 
 
 ```
+#### koa支持async函数
+```js
+
+pp.use(async (ctx, next) => {
+  console.log('middleware 2 上')
+  await next() // 异步调用下一个
+  console.log('middleware 2 下')
+})
+
+```
+async和await如果用, 都用, 否则, 顺序会变成下面:
+```js
+app.use((ctx, next) => {
+  console.log('middleware 1 上')
+  next()
+  console.log('middleware 1 下')
+})
+
+app.use(async (ctx, next) => {
+  console.log('middleware 2 上')
+  await next()
+  console.log('middleware 2 下')
+})
+
+// middleware 1 上
+// middleware 2 上
+// middleware 1 下
+// middleware 2 下
+```
+都用async/await就正常了
+```js
+app.use(async (ctx, next) => {
+  console.log('middleware 1 上')
+  await next()
+  console.log('middleware 1 下')
+})
+
+app.use(async (ctx, next) => {
+  console.log('middleware 2 上')
+  await next()
+  console.log('middleware 2 下')
+})
+
+// middleware 1 上
+// middleware 2 上
+// middleware 2 下
+// middleware 1 下
+```
+中间件中的调用总会返回promise (内部实现是基于async/await)
+```js
+aapp.use((ctx, next) => {
+  console.log('middleware 1 上')
+  const res = next() // Promise { undefined }
+  console.log(res)
+  console.log('middleware 1 下')
+})
+
+app.use((ctx, next) => {
+  console.log('middleware 2 上')
+  console.log('middleware 2 下')
+})
+
+// middleware 1 上
+// middleware 2 上
+// middleware 2 下
+// Promise { undefined }
+// middleware 1 下
+```
+中间件可以return, next()的结果会把return包装成Promise对象
+```js
+app.use((ctx, next) => {
+  console.log('middleware 1 上')
+  const res = next()
+  console.log(res)
+  console.log('middleware 1 下')
+})
+
+app.use((ctx, next) => {
+  console.log('middleware 2 上')
+  console.log('middleware 2 下')
+  return 'abc'
+})
+
+// middleware 1 上
+// middleware 2 上
+// middleware 2 下
+// Promise { 'abc' }
+// middleware 1 下
+```
+#### 深入理解async/await
+如何获取return中的值?
+```js
+app.use((ctx, next) => {
+  console.log('middleware 1 上')
+  // 方案一
+  const res = next()
+  res.then((data) => {
+    console.log(data)
+  })
+  console.log('middleware 1 下')
+})
+
+app.use((ctx, next) => {
+  console.log('middleware 2 上')
+  console.log('middleware 2 下')
+  return 'abc'
+})
+
+// middleware 1 上
+// middleware 2 上
+// middleware 2 下
+// middleware 1 下
+// abc
+```
+async/await代替promise
+```js
+// 内部有await, 必须是async 函数
+app.use(async (ctx, next) => {
+  console.log('middleware 1 上')
+
+  // 方案二
+  // await底层实现基于genarator, 所有不同于promise的执行顺序
+  const res = await next()
+  console.log(res)
+  console.log('middleware 1 下')
+})
+
+app.use((ctx, next) => {
+  console.log('middleware 2 上')
+  console.log('middleware 2 下')
+  return 'abc'
+})
+
+// middleware 1 上
+// middleware 2 上
+// middleware 2 下
+// abc
+// middleware 1 下
+
+```
+##### await
+`await expression`
+- 表达式
+  - 可以接Promise对象
+  - 可以后接其他表达式 e.g `10*10`
+- 返回值
+  - 返回Promise对象的处理结果, 只接收resolve状态
+  - 如等待的不是Promise对象, 则返回改值本身
+  - 如果是reject状态, 会抛出异常, 由try-catch捕获
+- 暂停当前 async function 的执行，等待 Promise 处理完成  (generate中的yeild关键字使生成器函数执行暂停)
