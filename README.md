@@ -9,6 +9,7 @@
     - [koa支持async函数](#koa%E6%94%AF%E6%8C%81async%E5%87%BD%E6%95%B0)
     - [深入理解async/await](#%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3asyncawait)
       - [await](#await)
+    - [洋葱模型的意义](#%E6%B4%8B%E8%91%B1%E6%A8%A1%E5%9E%8B%E7%9A%84%E6%84%8F%E4%B9%89)
 ## 相关
 - [github](https://github.com/GivenCui/wxServer)
 - [幕布](https://mubu.com/doc/oaG5Q95Zb0)
@@ -85,6 +86,8 @@ app.listen(3000, () => {
 2. 下一个需要手动调用 next()
 
 #### 洋葱模型
+> koa按洋葱模型的顺序执行的先决条件: 必须用async, next()前必须加await
+
 ![洋葱模型](http://ww2.sinaimg.cn/large/006tNc79ly1g4bbd1iknrj30d20bf3yq.jpg)
 ```js
 const Koa = require('koa')
@@ -134,7 +137,8 @@ app.use((ctx, next) => {
 
 app.use(async (ctx, next) => {
   console.log('middleware 2 上')
-  await next()
+  // await后默认是异步调动, 所以阻塞内部
+  await next() // Promise { undefined }
   console.log('middleware 2 下')
 })
 
@@ -182,11 +186,11 @@ app.use((ctx, next) => {
 // Promise { undefined }
 // middleware 1 下
 ```
-中间件可以return, next()的结果会把return包装成Promise对象
+中间件可以return, koa内部是基于async/await实现的, 所以返回的是Promise对象, 如果返回的不是promise对象, 会强制转换成Promise对象
 ```js
 app.use((ctx, next) => {
   console.log('middleware 1 上')
-  const res = next()
+  const res = next() // Promise { 'abc' }
   console.log(res)
   console.log('middleware 1 下')
 })
@@ -264,3 +268,73 @@ app.use((ctx, next) => {
   - 如等待的不是Promise对象, 则返回改值本身
   - 如果是reject状态, 会抛出异常, 由try-catch捕获
 - 暂停当前 async function 的执行，等待 Promise 处理完成  (generate中的yeild关键字使生成器函数执行暂停)
+  - async内是阻塞的
+  - async外是非阻塞的, async内也可以去并发请求  如promise.all
+  - 阻塞当前线程, 这个说法是错误的
+  
+以下例子验证:
+```js
+const koa = require('koa')
+
+const mockAsyn = () => {
+  return new Promise((resolve, reject) => {
+    setTimeout(() => {
+      resolve('等待2秒')
+    }, 2000)
+  })
+}
+
+const app = new koa()
+app.use(async (ctx, next) => {
+  const start = Date.now()
+  // const res = mockAsyn() // case1
+  const res = await mockAsyn() // case2
+  const end = Date.now() 
+  console.log('请求用时为: ', end - start, 'ms')
+})
+app.listen(3001, () => {
+  console.log('server is running is 3001')
+})
+
+// case1
+// 请求用时为:  0ms
+
+// case2
+// 请求用时为:  2002ms
+```
+但是没有阻塞函数外
+```js
+const mockAsyn = () => {
+  return new Promise((resolve, reject) => {
+    setTimeout(() => {
+      resolve('等待2秒')
+    }, 2000)
+  })
+}
+
+const testAsyn = async () => {
+  console.log('1')
+
+  const res = await mockAsyn()
+  console.log('2', res)
+}
+
+testAsyn()
+
+console.log('3')
+console.log('4')
+
+
+// 1
+// 3
+// 4
+// 2 等待2秒
+```
+问: 为什么koa中间件要用async
+- 内部如果用了await关键字, 函数一定要有async
+- 如果内部没用到await, 可以不加
+- koa是基于async/await实现的, 所以, 中间件return, 会是个Promise对象
+
+#### 洋葱模型的意义
+1. 是一个约定, 比如: logger中计算请求响应时长, 如果不按照洋葱模型, 就不准确
+2. 中间件的数据流转通过ctx, 例如ctx.state用来保存公共数据
