@@ -46,16 +46,18 @@ module.exports = exception
 ### Lin-Validator使用指南
 > core目录引入lin-validator.js和util.js
 ```js
-.
 ├── app
-│   └── api
-│       ├── v1
-│       │   ├── book.js
-│       │   └── classic.js
-│       └── v2
+│   ├── api
+│   │   ├── v1
+│   │   │   ├── book.js
+│   │   │   └── classic.js
+│   │   └── v2
+│   ├── lib
+│   └── validators
+│       └── validator.js
 ├── app.js
 ├── core
-│   ├── HttpException.js
+│   ├── http-exception.js
 │   ├── init.js
 │   ├── lin-validator.js
 │   └── util.js
@@ -64,3 +66,22 @@ module.exports = exception
 └── package.json
 
 ```
+```js
+// app/validators/validator.js
+const { LinValidator, Rule } = require('../../core/lin-validator')
+
+// 验证是正整数
+class PositiveIntegerValidator extends LinValidator {
+  constructor() {
+    super()
+    this.id = [new Rule('isInt', '需要是正整数', { min: 1 })]
+  }
+}
+
+module.exports = {
+  PositiveIntegerValidator
+}
+
+
+```
+使用正整数验证器`const v = new PositiveIntegerValidator().validate(ctx)`
