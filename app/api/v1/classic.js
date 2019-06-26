@@ -11,6 +11,7 @@ router.post('/v1/:id/classic/latest', (ctx, next) => {
   const query = ctx.request.query
   const headers = ctx.request.header
   const body = ctx.request.body // 需要koa-bodyparser
+  a // 测试未知异常
   if (true) {
     const error = new ParameterException()
     throw error
