@@ -1,4 +1,4 @@
-const { HttpException } = require('../core/HttpException')
+const { HttpException } = require('../core/http-exception')
 
 const exception = async (ctx, next) => {
   try {
@@ -15,7 +15,7 @@ const exception = async (ctx, next) => {
       }
     } else {
       // 未知的异常
-      // console.error(error) // 可以通过pm2打印日志
+      console.error(error) // 可以通过pm2打印日志
       ctx.body = {
         msg: '服务器有错误...',
         errorCode: 999,

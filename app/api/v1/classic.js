@@ -2,7 +2,8 @@ const Router = require('koa-router')
 const {
   HttpException,
   ParameterException
-} = require('../../../core/HttpException')
+} = require('../../../core/http-exception')
+const { PositiveIntegerValidator } = require('../../validators/validator')
 const router = new Router()
 
 router.post('/v1/:id/classic/latest', (ctx, next) => {
@@ -11,11 +12,9 @@ router.post('/v1/:id/classic/latest', (ctx, next) => {
   const query = ctx.request.query
   const headers = ctx.request.header
   const body = ctx.request.body // 需要koa-bodyparser
-  a // 测试未知异常
-  if (true) {
-    const error = new ParameterException()
-    throw error
-  }
+
+  const v = new PositiveIntegerValidator().validate(ctx)
+
   ctx.body = {
     key: 'classic',
     params,
