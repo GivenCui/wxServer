@@ -6,6 +6,9 @@
   - [api版本](#api%E7%89%88%E6%9C%AC)
   - [版本号携带策略](#%E7%89%88%E6%9C%AC%E5%8F%B7%E6%90%BA%E5%B8%A6%E7%AD%96%E7%95%A5)
   - [目录结构](#%E7%9B%AE%E5%BD%95%E7%BB%93%E6%9E%84)
+- [vscode + nodemon调试](#vscode--nodemon%E8%B0%83%E8%AF%95)
+- [requireDirectory实现路由自动加载](#requireDirectory%E5%AE%9E%E7%8E%B0%E8%B7%AF%E7%94%B1%E8%87%AA%E5%8A%A8%E5%8A%A0%E8%BD%BD)
+- [初始化管理器与process.cwd](#%E5%88%9D%E5%A7%8B%E5%8C%96%E7%AE%A1%E7%90%86%E5%99%A8%E4%B8%8Eprocesscwd)
 ## 相关
 [API](http://bl.7yue.pro/dev/index.html)
 ## 路由
@@ -97,5 +100,88 @@ router.get('v1/book/latest', (ctx, next) => {
 })
 
 module.exports = router
+
+```
+## vscode + nodemon调试
+> 需要nodemon全局安装, 如果不在PATH中, 则不能匹配, DEBUG配置文件在` .vscode/launch.jsson`中
+
+```json
+// vscode的DEBUG界面配置launch.json
+{
+  "type": "node",
+  "request": "launch",
+  "name": "nodemon",
+  "runtimeExecutable": "nodemon",
+  "program": "${workspaceFolder}/app.js",
+  "restart": true,
+  "console": "integratedTerminal",
+  "internalConsoleOptions": "neverOpen"
+},
+{
+  "type": "node",
+  "request": "launch",
+  "name": "当前文件",
+  "program": "${file}"
+},
+
+```
+## requireDirectory实现路由自动加载
+```js
+// 动脑筋 思考 能不能简化写法
+const Router = require('koa-router')
+const requireDirectory = require('require-directory')
+
+// 动脑筋 思考 能不能简化写法
+// 注意: module, 不是'module'
+requireDirectory(module, './app/api', {
+  visit(module) {
+    if (module instanceof Router) {
+      // 注册路由
+      app.use(module.routes())
+    }
+  }
+})
+```
+## 初始化管理器与process.cwd
+> app.js中的相关逻辑拆分到`core/init.js`中
+```
+.
+├── app
+│   └── api
+│       ├── v1
+│       │   ├── book.js
+│       │   └── classic.js
+│       └── v2
+├── app.js
+├── core
+│   └── init.js
+└── package.json
+
+```
+`process.cwd()` 是指Node.js 进程的当前工作目录
+```js
+// '../app/api'写死的路径不利于代码重构复用
+    // 1. 绝对路径
+    // 2. 可以提供接口配置path
+    const apiPath = path.resolve(process.cwd(), './app/api')
+    requireDirectory(module, apiPath, {
+      visit(module) {
+        if (module instanceof Router) {
+          // 注册路由
+          InitManager.app.use(module.routes())
+        }
+      }
+    })
+```
+拓展: node中路径相关概念
+```js
+const path = require('path')
+// 测试node常用path相关
+
+console.log('__dirname: ', __dirname) // 当前文件所在的目录
+console.log('path.resolve("test.js"): ', path.resolve('test.js')) // 返回绝对路径
+console.log('path.join("test.js"): ', path.join('test.js')) // 返回相对路径
+
+console.log('process.cwd(): ', process.cwd()) // Node.js 进程的当前工作目录, 在不同的目录启动, 会变动
 
 ```
